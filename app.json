@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "GiftRegistry",
+    "slug": "gift-registry",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#534AB7"
+    },
+    "jsEngine": "jsc",
+    "android": {
+      "jsEngine": "jsc",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#534AB7"
+      },
+      "package": "com.giftregistry.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "scheme": "giftregistry",
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "updates": {
+      "enabled": false
+    },
+    "ios": {
+      "bundleIdentifier": "com.giftregistry.app",
+      "jsEngine": "jsc"
+    }
+  }
+}

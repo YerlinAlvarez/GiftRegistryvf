@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function listOwnerId(listId) {
+      return get(/databases/$(database)/documents/giftLists/$(listId)).data.ownerId;
+    }
+
+    function isListOwner(listId) {
+      return isSignedIn() && listOwnerId(listId) == request.auth.uid;
+    }
+
+    match /giftLists/{listId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /giftItems/{itemId} {
+      allow read: if true;
+
+      // Solo organizadora puede crear items (se puede endurecer más adelante)
+      allow create: if isSignedIn() && isListOwner(request.resource.data.listId);
+
+      // Invitado: reservar (available -> reserved)
+      allow update: if (
+        resource.data.status == 'available' &&
+        request.resource.data.status == 'reserved' &&
+        request.resource.data.listId == resource.data.listId &&
+        request.resource.data.reservedBy is string &&
+        request.resource.data.reservedBy.size() > 0 &&
+        request.resource.data.diff(resource.data).changedKeys()
+          .hasOnly(['status', 'reservedBy', 'reservedAt'])
+      )
+      // Organizadora: marcar comprado (reserved -> bought)
+      || (
+        isSignedIn() &&
+        isListOwner(resource.data.listId) &&
+        resource.data.status == 'reserved' &&
+        request.resource.data.status == 'bought' &&
+        request.resource.data.listId == resource.data.listId &&
+        request.resource.data.diff(resource.data).changedKeys()
+          .hasOnly(['status', 'boughtAt'])
+      )
+      // Organizadora: editar otros campos (pero sin cambiar listId)
+      || (
+        isSignedIn() &&
+        isListOwner(resource.data.listId) &&
+        request.resource.data.listId == resource.data.listId
+      );
+
+      allow delete: if isSignedIn() && isListOwner(resource.data.listId);
+    }
+  }
+}
+
