@@ -1,9 +1,10 @@
-import {
+﻿import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged,
     GoogleAuthProvider,
+    GithubAuthProvider,
     signInWithPopup,
     signInWithRedirect,
     getRedirectResult,
@@ -35,27 +36,34 @@ export class FirebaseAuthDataSource {
     async loginWithGoogle(): Promise<DomainUser> {
         try {
             const provider = new GoogleAuthProvider();
-
-            throw new Error('Usar signInWithGoogleRedirect en React Native');
+            const isWeb = typeof window !== 'undefined' && typeof document !== 'undefined';
+            if (isWeb) {
+                const userCredential = await signInWithPopup(auth, provider);
+                return this.mapFirebaseUserToDomain(userCredential.user);
+            } else {
+                await signInWithRedirect(auth, provider);
+                const result = await getRedirectResult(auth);
+                if (result) return this.mapFirebaseUserToDomain(result.user);
+                throw new Error('No se pudo completar el login con Google');
+            }
         } catch (error: any) {
             throw this.mapAuthError(error.code || 'unknown-error');
         }
     }
 
-    async signInWithGoogleRedirect(): Promise<void> {
+    async loginWithGitHub(): Promise<DomainUser> {
         try {
-            const provider = new GoogleAuthProvider();
-
-            await signInWithRedirect(auth, provider);
-        } catch (error: any) {
-            throw this.mapAuthError(error.code || 'unknown-error');
-        }
-    }
-
-    async getRedirectResultGoogle(): Promise<DomainUser | null> {
-        try {
-            const result = await getRedirectResult(auth);
-            return result ? this.mapFirebaseUserToDomain(result.user) : null;
+            const provider = new GithubAuthProvider();
+            const isWeb = typeof window !== 'undefined' && typeof document !== 'undefined';
+            if (isWeb) {
+                const userCredential = await signInWithPopup(auth, provider);
+                return this.mapFirebaseUserToDomain(userCredential.user);
+            } else {
+                await signInWithRedirect(auth, provider);
+                const result = await getRedirectResult(auth);
+                if (result) return this.mapFirebaseUserToDomain(result.user);
+                throw new Error('No se pudo completar el login con GitHub');
+            }
         } catch (error: any) {
             throw this.mapAuthError(error.code || 'unknown-error');
         }
@@ -79,7 +87,6 @@ export class FirebaseAuthDataSource {
             const domainUser = firebaseUser ? this.mapFirebaseUserToDomain(firebaseUser) : null;
             callback(domainUser);
         });
-
         return unsubscribe;
     }
 
@@ -87,28 +94,25 @@ export class FirebaseAuthDataSource {
         return {
             id: firebaseUser.uid,
             email: firebaseUser.email || '',
-            // name viene de displayName en Firebase
             name: firebaseUser.displayName || 'Usuario',
-            // photoUrl puede ser null, convertir a undefined
             photoUrl: firebaseUser.photoURL || undefined,
         } as DomainUser;
     }
 
     private mapAuthError(code: string): Error {
         const errorMessages: Record<string, string> = {
-            'auth/email-already-in-use': 'Este email ya está registrado',
-            'auth/invalid-email': 'Email inválido',
-            'auth/operation-not-allowed': 'Operación no permitida',
-            'auth/weak-password': 'La contraseña es muy débil (mín 6 caracteres)',
-            'auth/user-disabled': 'Este usuario ha sido deshabilitado',
+            'auth/email-already-in-use': 'Este email ya esta registrado',
+            'auth/invalid-email': 'Email invalido',
+            'auth/weak-password': 'La contrasena es muy debil (min 6 caracteres)',
             'auth/user-not-found': 'Usuario no encontrado',
-            'auth/wrong-password': 'Contraseña incorrecta',
-            'auth/invalid-credential': 'Credenciales inválidas',
-            'auth/too-many-requests': 'Demasiados intentos. Intenta más tarde',
-            'auth/network-request-failed': 'Error de conexión. Verifica tu internet',
+            'auth/wrong-password': 'Contrasena incorrecta',
+            'auth/invalid-credential': 'Credenciales invalidas',
+            'auth/too-many-requests': 'Demasiados intentos. Intenta mas tarde',
+            'auth/network-request-failed': 'Error de conexion. Verifica tu internet',
+            'auth/popup-closed-by-user': 'Cerraste la ventana de autenticacion',
+            'auth/cancelled-popup-request': 'Autenticacion cancelada',
         };
-
-        const message = errorMessages[code] || `Error de autenticación: ${code}`;
+        const message = errorMessages[code] || `Error de autenticacion: ${code}`;
         return new Error(message);
     }
 }

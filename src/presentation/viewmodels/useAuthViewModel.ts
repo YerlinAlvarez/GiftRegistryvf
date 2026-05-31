@@ -1,6 +1,7 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { User } from '../../domain/entities/User';
 import { AuthRepositoryImpl } from '../../data/repositories/AuthRepositoryImpl';
+import { FirebaseAuthDataSource } from '../../data/datasources/FirebaseAuthDataSource';
 
 interface AuthState {
   user: User | null;
@@ -10,6 +11,8 @@ interface AuthState {
 
   init: () => void;
   loginWithEmail: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  loginWithGitHub: () => Promise<void>;
   registerWithEmail: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -17,6 +20,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set, get) => {
   const repository = new AuthRepositoryImpl();
+  const dataSource = new FirebaseAuthDataSource();
 
   return {
     user: null,
@@ -27,15 +31,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
     init: () => {
       const { unsubscribeAuth } = get();
       if (unsubscribeAuth) return;
-
       const unsubscribe = repository.subscribeToAuthState((user) => {
         set({ user });
       });
-
-      set({
-        user: repository.getCurrentUser(),
-        unsubscribeAuth: unsubscribe,
-      });
+      set({ user: repository.getCurrentUser(), unsubscribeAuth: unsubscribe });
     },
 
     loginWithEmail: async (email: string, password: string) => {
@@ -44,7 +43,27 @@ export const useAuthStore = create<AuthState>((set, get) => {
         const user = await repository.loginUser(email.trim(), password);
         set({ user, isLoading: false });
       } catch (e: any) {
-        set({ error: e.message ?? 'Error al iniciar sesión', isLoading: false });
+        set({ error: e.message ?? 'Error al iniciar sesion', isLoading: false });
+      }
+    },
+
+    loginWithGoogle: async () => {
+      set({ isLoading: true, error: null });
+      try {
+        const user = await dataSource.loginWithGoogle();
+        set({ user, isLoading: false });
+      } catch (e: any) {
+        set({ error: e.message ?? 'Error al iniciar sesion con Google', isLoading: false });
+      }
+    },
+
+    loginWithGitHub: async () => {
+      set({ isLoading: true, error: null });
+      try {
+        const user = await dataSource.loginWithGitHub();
+        set({ user, isLoading: false });
+      } catch (e: any) {
+        set({ error: e.message ?? 'Error al iniciar sesion con GitHub', isLoading: false });
       }
     },
 
@@ -64,11 +83,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
         await repository.logoutUser();
         set({ user: null, isLoading: false });
       } catch (e: any) {
-        set({ error: e.message ?? 'Error al cerrar sesión', isLoading: false });
+        set({ error: e.message ?? 'Error al cerrar sesion', isLoading: false });
       }
     },
 
     clearError: () => set({ error: null }),
   };
 });
-
