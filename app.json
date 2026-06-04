@@ -38,6 +38,12 @@
     "ios": {
       "bundleIdentifier": "com.giftregistry.app",
       "jsEngine": "jsc"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "60ddf944-2868-47de-acd6-2083d82905d3"
+      }
     }
   }
 }

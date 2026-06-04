@@ -37,6 +37,7 @@ export class FirebaseAuthDataSource {
         try {
             const provider = new GoogleAuthProvider();
             const isWeb = typeof window !== 'undefined' && typeof document !== 'undefined';
+            
             if (isWeb) {
                 const userCredential = await signInWithPopup(auth, provider);
                 return this.mapFirebaseUserToDomain(userCredential.user);
@@ -47,9 +48,15 @@ export class FirebaseAuthDataSource {
                 throw new Error('No se pudo completar el login con Google');
             }
         } catch (error: any) {
+            console.log('=== ERROR GOOGLE ===');
+            console.log('error:', error);
+            console.log('code:', error?.code);
+            console.log('message:', error?.message);
+            
             throw this.mapAuthError(error.code || 'unknown-error');
         }
     }
+
 
     async loginWithGitHub(): Promise<DomainUser> {
         try {
