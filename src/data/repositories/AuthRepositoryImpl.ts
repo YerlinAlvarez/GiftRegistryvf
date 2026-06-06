@@ -1,4 +1,4 @@
-import { FirebaseAuthDataSource } from '../datasources/FirebaseAuthDataSource';
+import { FirebaseAuthDataSource } from '../datasources/auth';
 import { IAuthRepository } from '../../domain/repositories/IAuthRepository';
 import { User } from '../../domain/entities/User';
 

@@ -107,7 +107,7 @@ export const useGiftListStore = create<GiftListState>((set, get) => {
                 //console.log('DEBUG: Buscando en cache:', normalizedShareCode);
                 cachedList = await cache
                     .getListByShareCode(normalizedShareCode)
-                    .catch((e) => {
+                    .catch((e: unknown) => {
                         //console.log('DEBUG: Error en cache:', e);
                         return null;
                     });

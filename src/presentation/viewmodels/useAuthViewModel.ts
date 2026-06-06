@@ -1,7 +1,7 @@
 ﻿import { create } from 'zustand';
 import { User } from '../../domain/entities/User';
 import { AuthRepositoryImpl } from '../../data/repositories/AuthRepositoryImpl';
-import { FirebaseAuthDataSource } from '../../data/datasources/FirebaseAuthDataSource';
+import { FirebaseAuthDataSource } from '../../data/datasources/auth';
 
 interface AuthState {
   user: User | null;
